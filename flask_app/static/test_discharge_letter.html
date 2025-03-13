@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Discharge Letter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1, h2 {
+            color: #2c3e50;
+        }
+        .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        pre {
+            white-space: pre-wrap;
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Discharge Letter</h1>
+    
+    <div class="section">
+        <h2>Sample Discharge Letter</h2>
+        <p>Below is a sample discharge letter that you can copy and paste into the application to test the medication extraction functionality:</p>
+        <pre id="sample-letter">
+Hospital Discharge Letter
+
+Patient Name: John Smith
+Date of Birth: 01/01/1970
+NHS Number: 123 456 7890
+Date of Admission: 01/03/2025
+Date of Discharge: 10/03/2025
+
+Diagnosis:
+- Pneumonia
+- Hypertension
+- Type 2 Diabetes
+
+Clinical Summary:
+Patient was admitted with shortness of breath and fever. Chest X-ray showed right lower lobe consolidation consistent with pneumonia. Patient was treated with IV antibiotics and showed good clinical improvement. Blood pressure was elevated throughout admission, requiring adjustment of antihypertensive medication.
+
+Medications Prescribed on Discharge:
+Amoxicillin [500mg], 1 tablet three times a day for 5 days for pneumonia.
+Amlodipine [10mg], 1 tablet once daily in the morning for hypertension.
+Metformin [500mg], 1 tablet twice a day with food for diabetes.
+Paracetamol [500mg], 1-2 tablets four times a day when required for pain.
+Salbutamol Inhaler [100mcg], 2 puffs four times a day when required for shortness of breath.
+
+Dose Changes:
+Amlodipine increased from 5mg to 10mg daily.
+
+Medications Started in Hospital Comment:
+Amoxicillin started for treatment of pneumonia.
+
+Medications Stopped in Hospital Comment:
+None.
+
+Take Home Medications Comment:
+7-day supply of all medications provided.
+
+Treatment recommendation (For GP):
+Please review blood pressure in 2 weeks and adjust antihypertensive medication as needed.
+Consider referral to diabetes clinic for optimization of glycemic control.
+
+Information for the Community Pharmacy:
+Patient may need assistance with inhaler technique.
+
+TTO Completed by Ward Pharmacist?: Yes
+
+Medications Authorised by: Dr. Jane Doe
+        </pre>
+        <button id="copy-button">Copy to Clipboard</button>
+    </div>
+
+    <script>
+        document.getElementById('copy-button').addEventListener('click', function() {
+            const sampleLetter = document.getElementById('sample-letter').textContent;
+            navigator.clipboard.writeText(sampleLetter)
+                .then(() => {
+                    alert('Discharge letter copied to clipboard! You can now paste it into the application.');
+                })
+                .catch(err => {
+                    console.error('Could not copy text: ', err);
+                    alert('Failed to copy. Please select and copy the text manually.');
+                });
+        });
+    </script>
+</body>
+</html>

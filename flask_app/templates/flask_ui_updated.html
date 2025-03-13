@@ -109,6 +109,8 @@
             background-color: #45a049;
         }
     </style>
+    <!-- Include our medication extractor JavaScript -->
+    <script src="/static/js/medication-extractor.js"></script>
 </head>
 <body>
     <div class="warning-banner">
@@ -219,8 +221,8 @@
                         
                         // Try to extract medication info from the discharge letter
                         try {
-                            // Call the parseDischargeLetterMedications function from the iframe
-                            const medications = iframe.contentWindow.parseDischargeLetterMedications(dischargeText);
+                            // Use our own medication extraction function instead of the iframe's
+                            const medications = extractMedicationsFromDischargeLetter(dischargeText);
                             
                             if (medications && medications.length > 0) {
                                 // Use the first medication for the form
@@ -230,7 +232,16 @@
                                 document.getElementById('medication-name').value = med.name || '';
                                 document.getElementById('dosage').value = med.dosage || '';
                                 document.getElementById('frequency').value = med.frequency || '';
-                                document.getElementById('purpose').value = 'Treatment for ' + (med.condition || 'your condition');
+                                
+                                // Use the condition if available, otherwise default text
+                                let purposeText = 'Treatment for ';
+                                if (med.condition && med.condition.trim() !== '') {
+                                    purposeText += med.condition;
+                                } else {
+                                    purposeText += 'your condition';
+                                }
+                                document.getElementById('purpose').value = purposeText;
+                                
                                 document.getElementById('side-effects').value = 'Common side effects may include drowsiness, nausea, and headache. Please consult your doctor for a complete list.';
                                 
                                 // Show the modal
@@ -264,8 +275,8 @@
                         
                         // Try to extract medication info from the discharge letter
                         try {
-                            // Call the parseDischargeLetterMedications function from the iframe
-                            const medications = iframe.contentWindow.parseDischargeLetterMedications(dischargeText);
+                            // Use our own medication extraction function instead of the iframe's
+                            const medications = extractMedicationsFromDischargeLetter(dischargeText);
                             
                             if (medications && medications.length > 0) {
                                 // Use the first medication for the form
@@ -274,12 +285,18 @@
                                 // Fill in the form fields
                                 document.getElementById('med-name').value = med.name || '';
                                 
-                                // Determine time of day from frequency
+                                // Determine time of day from timing or frequency
                                 let timeOfDay = 'morning';
-                                if (med.frequency && med.frequency.toLowerCase().includes('night')) {
-                                    timeOfDay = 'bedtime';
-                                } else if (med.frequency && med.frequency.toLowerCase().includes('evening')) {
-                                    timeOfDay = 'evening';
+                                if (med.timing) {
+                                    if (med.timing.includes('night') || med.timing.includes('bedtime')) {
+                                        timeOfDay = 'bedtime';
+                                    } else if (med.timing.includes('evening')) {
+                                        timeOfDay = 'evening';
+                                    } else if (med.timing.includes('afternoon')) {
+                                        timeOfDay = 'afternoon';
+                                    } else if (med.timing.includes('morning')) {
+                                        timeOfDay = 'morning';
+                                    }
                                 }
                                 
                                 // Set the time of day select
@@ -291,9 +308,25 @@
                                     }
                                 }
                                 
-                                // Set a default for with food
+                                // Set with food based on extracted info
+                                let withFoodValue = 'yes'; // Default
+                                if (med.withFood) {
+                                    if (med.withFood === 'with food') {
+                                        withFoodValue = 'yes';
+                                    } else if (med.withFood === 'without food') {
+                                        withFoodValue = 'no';
+                                    } else {
+                                        withFoodValue = 'optional';
+                                    }
+                                }
+                                
                                 const foodSelect = document.getElementById('with-food');
-                                foodSelect.selectedIndex = 1; // Default to "yes"
+                                for (let i = 0; i < foodSelect.options.length; i++) {
+                                    if (foodSelect.options[i].value === withFoodValue) {
+                                        foodSelect.selectedIndex = i;
+                                        break;
+                                    }
+                                }
                                 
                                 // Show the modal
                                 document.getElementById('pictorial-modal').style.display = 'block';
@@ -316,14 +349,14 @@
         const closePictorial = document.getElementById('close-pictorial');
         const leafletModal = document.getElementById('leaflet-modal');
         const pictorialModal = document.getElementById('pictorial-modal');
-        
+
         closeLeaflet.onclick = function() {
             leafletModal.style.display = "none";
-        }
-        
+        };
+
         closePictorial.onclick = function() {
             pictorialModal.style.display = "none";
-        }
+        };
 
         // Close modals when clicking outside
         window.onclick = function(event) {
@@ -333,7 +366,7 @@
             if (event.target == pictorialModal) {
                 pictorialModal.style.display = "none";
             }
-        }
+        };
 
         // Form submission handling
         document.getElementById('leaflet-form').addEventListener('submit', function(e) {
@@ -355,23 +388,24 @@
             })
             .then(response => response.json())
             .then(data => {
-                // Open the generated HTML in a new window
-                const newWindow = window.open('', '_blank');
-                newWindow.document.write(data.html);
-                newWindow.document.close();
-                
-                // Close the modal
-                leafletModal.style.display = "none";
-                
-                // Reset the form
-                document.getElementById('leaflet-form').reset();
+                if (data.status === 'success') {
+                    // Create a new window and write the HTML to it
+                    const newWindow = window.open('', '_blank');
+                    newWindow.document.write(data.html);
+                    newWindow.document.close();
+                    
+                    // Close the modal
+                    leafletModal.style.display = "none";
+                } else {
+                    alert('Error generating leaflet: ' + data.message);
+                }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while generating the leaflet');
+                alert('An error occurred while generating the leaflet.');
             });
         });
-
+        
         document.getElementById('pictorial-form').addEventListener('submit', function(e) {
             e.preventDefault();
             const formData = {
@@ -389,20 +423,21 @@
             })
             .then(response => response.json())
             .then(data => {
-                // Open the generated HTML in a new window
-                const newWindow = window.open('', '_blank');
-                newWindow.document.write(data.html);
-                newWindow.document.close();
-                
-                // Close the modal
-                pictorialModal.style.display = "none";
-                
-                // Reset the form
-                document.getElementById('pictorial-form').reset();
+                if (data.status === 'success') {
+                    // Create a new window and write the HTML to it
+                    const newWindow = window.open('', '_blank');
+                    newWindow.document.write(data.html);
+                    newWindow.document.close();
+                    
+                    // Close the modal
+                    pictorialModal.style.display = "none";
+                } else {
+                    alert('Error generating pictorial: ' + data.message);
+                }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while creating the pictorial');
+                alert('An error occurred while generating the pictorial.');
             });
         });
     </script>
