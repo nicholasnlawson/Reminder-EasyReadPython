@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medication Chart Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .warning-banner {
+            color: red;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin: 0;
+            padding: 10px;
+            border: 2px solid red;
+            background-color: #ffeeee;
+        }
+        .iframe-container {
+            width: 100%;
+            height: calc(100vh - 54px); /* Adjusted for only the warning banner */
+            border: none;
+            position: relative;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        /* CSS to hide the warning banner in the iframe */
+        .hide-warning {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            background-color: white;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="warning-banner">
+        ***TEST PROGRAM - NOT YET APPROVED FOR USE IN STSFT***
+    </div>
+    
+    <div class="iframe-container">
+        <!-- Add a div to cover the warning in the iframe -->
+        <div class="hide-warning"></div>
+        <iframe src="/original" title="Medication Chart Generator" id="chart-generator-iframe"></iframe>
+    </div>
+
+    <script>
+        // Wait for the iframe to load
+        document.getElementById('chart-generator-iframe').onload = function() {
+            // Adjust the height of the hide-warning div to cover the warning banner in the iframe
+            // This is a more robust solution than CSS alone
+            setTimeout(function() {
+                const warningHeight = document.querySelector('.warning-banner').offsetHeight;
+                document.querySelector('.hide-warning').style.height = (warningHeight + 20) + 'px';
+            }, 500);
+        };
+    </script>
+</body>
+</html>
