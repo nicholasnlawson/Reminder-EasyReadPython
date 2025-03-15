@@ -710,4 +710,6 @@ def get_medication_details():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    # Get port from environment variable or default to 5001
+    port = int(os.environ.get('PORT', 5001))
+    app.run(debug=False, port=port, host='0.0.0.0')
