@@ -11,6 +11,23 @@
             padding: 0;
             line-height: 1.6;
         }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #f9f9f9;
+        }
+        .logo-left {
+            max-height: 80px;
+            width: auto;
+            object-fit: contain;
+        }
+        .logo-right {
+            max-height: 80px;
+            width: auto;
+            object-fit: contain;
+        }
         .warning-banner {
             color: red;
             font-size: 24px;
@@ -98,7 +115,7 @@
         }
         .submit-button {
             padding: 10px 20px;
-            background-color: #4CAF50;
+            background-color: #8A2BE2; /* Purple to match the MaPPs logo */
             color: white;
             border: none;
             border-radius: 4px;
@@ -182,10 +199,50 @@
             border-radius: 50%;
         }
         input:checked + .slider {
-            background-color: #4CAF50;
+            background-color: #8A2BE2; /* Purple to match the MaPPs logo */
         }
         input:checked + .slider:before {
             transform: translateX(26px);
+        }
+        
+        /* Medication search styles */
+        .medication-search {
+            margin-top: 20px;
+            border-top: 1px solid #ddd;
+            padding-top: 15px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .search-results {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        
+        .search-result-item {
+            padding: 8px 12px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        
+        .search-result-item:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .search-result-name {
+            font-weight: bold;
+        }
+        
+        .search-result-formulation {
+            font-size: 0.9em;
+            color: #666;
         }
     </style>
     <!-- Include our medication extractor JavaScript -->
@@ -194,6 +251,11 @@
 <body>
     <div class="warning-banner">
         ***TEST PROGRAM - NOT YET APPROVED FOR USE IN STSFT***
+    </div>
+    
+    <div class="header">
+        <img src="/static/images/nhs_trust_logo.png" alt="NHS Trust Logo" class="logo-left">
+        <img src="/static/images/mapps_logo.png" alt="MaPPs Logo" class="logo-right">
     </div>
     
     <div class="iframe-container">
@@ -206,13 +268,20 @@
     <div id="leaflet-modal" class="modal">
         <div class="modal-content">
             <span class="close" id="close-leaflet">&times;</span>
-            <h2>Generate Patient Information Leaflet</h2>
+            <h2>Create Written Information Leaflets</h2>
             <div id="medication-list-leaflet" class="medication-list">
                 <!-- Medications will be added here dynamically -->
                 <p class="no-meds-message">No medications found in the discharge letter.</p>
             </div>
+            <div class="medication-search">
+                <h3>Search for additional medications</h3>
+                <div class="form-group">
+                    <input type="text" id="medication-search-leaflet" placeholder="Type to search medications..." class="search-input">
+                </div>
+                <div id="search-results-leaflet" class="search-results"></div>
+            </div>
             <div class="form-actions">
-                <button type="button" id="generate-leaflet-btn" class="submit-button">Generate Selected Leaflets</button>
+                <button type="button" id="generate-leaflet-btn" class="submit-button">Create Written Information Leaflets</button>
             </div>
         </div>
     </div>
@@ -221,13 +290,20 @@
     <div id="pictorial-modal" class="modal">
         <div class="modal-content">
             <span class="close" id="close-pictorial">&times;</span>
-            <h2>Create Easy Read Pictorial</h2>
+            <h2>Create Pictorial Information Leaflets</h2>
             <div id="medication-list-pictorial" class="medication-list">
                 <!-- Medications will be added here dynamically -->
                 <p class="no-meds-message">No medications found in the discharge letter.</p>
             </div>
+            <div class="medication-search">
+                <h3>Search for additional medications</h3>
+                <div class="form-group">
+                    <input type="text" id="medication-search-pictorial" placeholder="Type to search medications..." class="search-input">
+                </div>
+                <div id="search-results-pictorial" class="search-results"></div>
+            </div>
             <div class="form-actions">
-                <button type="button" id="generate-pictorial-btn" class="submit-button">Create Selected Pictorials</button>
+                <button type="button" id="generate-pictorial-btn" class="submit-button">Create Pictorial Information Leaflets</button>
             </div>
         </div>
     </div>
@@ -248,30 +324,34 @@
                 if (buttonContainer) {
                     // Create and add the Patient Information Leaflet button
                     const leafletBtn = document.createElement('button');
-                    leafletBtn.textContent = 'Generate Patient Information Leaflet';
+                    leafletBtn.textContent = 'Create Written Information Leaflets';
                     leafletBtn.id = 'leaflet-btn';
+                    leafletBtn.style.backgroundColor = '#8A2BE2'; // Purple to match the MaPPs logo
+                    leafletBtn.style.color = 'white';
+                    leafletBtn.style.border = 'none';
+                    leafletBtn.style.padding = '10px 20px';
+                    leafletBtn.style.borderRadius = '4px';
+                    leafletBtn.style.cursor = 'pointer';
                     leafletBtn.onclick = function(e) {
                         e.preventDefault();
                         
                         // Get the discharge letter text from the iframe
                         const dischargeText = iframeDoc.getElementById('discharge-letter').value;
                         
-                        // Parse the discharge letter to extract medication information
-                        if (dischargeText.trim() === '') {
-                            alert('Please enter discharge letter text first.');
-                            return;
-                        }
+                        // Parse the discharge letter to extract medication information if available
+                        // No longer requiring discharge letter text - allow empty for manual medication selection
                         
                         // Try to extract medication info from the discharge letter
                         try {
                             // Use our own medication extraction function instead of the iframe's
                             const medications = extractMedicationsFromDischargeLetter(dischargeText);
                             
+                            // Clear previous medications
+                            const medicationListElement = document.getElementById('medication-list-leaflet');
+                            medicationListElement.innerHTML = '';
+                            
+                            // Check if we have medications from the discharge letter
                             if (medications && medications.length > 0) {
-                                // Clear previous medications
-                                const medicationListElement = document.getElementById('medication-list-leaflet');
-                                medicationListElement.innerHTML = '';
-                                
                                 // Add each medication to the list with a toggle switch
                                 medications.forEach((med, index) => {
                                     if (med.isExcludedFromCharts) return; // Skip excluded medications
@@ -285,7 +365,7 @@
                                     
                                     const toggleInput = document.createElement('input');
                                     toggleInput.type = 'checkbox';
-                                    toggleInput.checked = true; // Default to checked
+                                    toggleInput.checked = false; // Default to unchecked (opt-in)
                                     toggleInput.dataset.medicationIndex = index;
                                     
                                     const toggleSlider = document.createElement('span');
@@ -300,7 +380,41 @@
                                     
                                     const nameDiv = document.createElement('div');
                                     nameDiv.className = 'medication-name';
-                                    nameDiv.textContent = med.name || 'Unknown Medication';
+                                    
+                                    // Get formatted medication name with formulation
+                                    fetch('/get_medication_details', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({ medicationName: med.name })
+                                    })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.status === 'success') {
+                                            nameDiv.textContent = data.formattedName || med.name || 'Unknown Medication';
+                                            
+                                            // Add PDF info if available
+                                            if (data.pdfAvailable) {
+                                                const pdfInfo = document.createElement('div');
+                                                pdfInfo.className = 'medication-info';
+                                                pdfInfo.textContent = 'PDF available: ' + data.formattedName;
+                                                detailsDiv.appendChild(pdfInfo);
+                                            } else {
+                                                const pdfInfo = document.createElement('div');
+                                                pdfInfo.className = 'medication-info';
+                                                pdfInfo.textContent = 'No matching PDF available';
+                                                pdfInfo.style.color = '#ff6666';
+                                                detailsDiv.appendChild(pdfInfo);
+                                            }
+                                        } else {
+                                            nameDiv.textContent = med.name || 'Unknown Medication';
+                                        }
+                                    })
+                                    .catch(error => {
+                                        console.error('Error fetching medication details:', error);
+                                        nameDiv.textContent = med.name || 'Unknown Medication';
+                                    });
                                     
                                     detailsDiv.appendChild(nameDiv);
                                     
@@ -311,12 +425,16 @@
                                     // Add the medication item to the list
                                     medicationListElement.appendChild(medicationItem);
                                 });
-                                
-                                // Show the modal
-                                document.getElementById('leaflet-modal').style.display = 'block';
-                            } else {
-                                alert('No medication information found in the discharge letter. Please check the text and try again.');
+                            } else if (dischargeText.trim()) {
+                                // Only show message if there was discharge text but no medications found
+                                const noMedsMessage = document.createElement('p');
+                                noMedsMessage.className = 'no-meds-message';
+                                noMedsMessage.textContent = 'No medications found in the discharge letter. Use the search box below to add medications.';
+                                medicationListElement.appendChild(noMedsMessage);
                             }
+                            
+                            // Show the modal
+                            document.getElementById('leaflet-modal').style.display = 'block';
                         } catch (error) {
                             console.error('Error parsing discharge letter:', error);
                             alert('Error parsing discharge letter: ' + error.message);
@@ -326,30 +444,34 @@
                     
                     // Create and add the Easy Read Pictorial button
                     const pictorialBtn = document.createElement('button');
-                    pictorialBtn.textContent = 'Create Easy Read Pictorial';
+                    pictorialBtn.textContent = 'Create Pictorial Information Leaflets';
                     pictorialBtn.id = 'pictorial-btn';
+                    pictorialBtn.style.backgroundColor = '#8A2BE2'; // Purple to match the MaPPs logo
+                    pictorialBtn.style.color = 'white';
+                    pictorialBtn.style.border = 'none';
+                    pictorialBtn.style.padding = '10px 20px';
+                    pictorialBtn.style.borderRadius = '4px';
+                    pictorialBtn.style.cursor = 'pointer';
                     pictorialBtn.onclick = function(e) {
                         e.preventDefault();
                         
                         // Get the discharge letter text from the iframe
                         const dischargeText = iframeDoc.getElementById('discharge-letter').value;
                         
-                        // Parse the discharge letter to extract medication information
-                        if (dischargeText.trim() === '') {
-                            alert('Please enter discharge letter text first.');
-                            return;
-                        }
+                        // Parse the discharge letter to extract medication information if available
+                        // No longer requiring discharge letter text - allow empty for manual medication selection
                         
                         // Try to extract medication info from the discharge letter
                         try {
                             // Use our own medication extraction function instead of the iframe's
                             const medications = extractMedicationsFromDischargeLetter(dischargeText);
                             
+                            // Clear previous medications
+                            const medicationListElement = document.getElementById('medication-list-pictorial');
+                            medicationListElement.innerHTML = '';
+                            
+                            // Check if we have medications from the discharge letter
                             if (medications && medications.length > 0) {
-                                // Clear previous medications
-                                const medicationListElement = document.getElementById('medication-list-pictorial');
-                                medicationListElement.innerHTML = '';
-                                
                                 // Add each medication to the list with a toggle switch
                                 medications.forEach((med, index) => {
                                     if (med.isExcludedFromCharts) return; // Skip excluded medications
@@ -363,7 +485,7 @@
                                     
                                     const toggleInput = document.createElement('input');
                                     toggleInput.type = 'checkbox';
-                                    toggleInput.checked = true; // Default to checked
+                                    toggleInput.checked = false; // Default to unchecked (opt-in)
                                     toggleInput.dataset.medicationIndex = index;
                                     
                                     const toggleSlider = document.createElement('span');
@@ -378,7 +500,41 @@
                                     
                                     const nameDiv = document.createElement('div');
                                     nameDiv.className = 'medication-name';
-                                    nameDiv.textContent = med.name || 'Unknown Medication';
+                                    
+                                    // Get formatted medication name with formulation
+                                    fetch('/get_medication_details', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({ medicationName: med.name })
+                                    })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.status === 'success') {
+                                            nameDiv.textContent = data.formattedName || med.name || 'Unknown Medication';
+                                            
+                                            // Add PDF info if available
+                                            if (data.pdfAvailable) {
+                                                const pdfInfo = document.createElement('div');
+                                                pdfInfo.className = 'medication-info';
+                                                pdfInfo.textContent = 'PDF available: ' + data.formattedName;
+                                                detailsDiv.appendChild(pdfInfo);
+                                            } else {
+                                                const pdfInfo = document.createElement('div');
+                                                pdfInfo.className = 'medication-info';
+                                                pdfInfo.textContent = 'No matching PDF available';
+                                                pdfInfo.style.color = '#ff6666';
+                                                detailsDiv.appendChild(pdfInfo);
+                                            }
+                                        } else {
+                                            nameDiv.textContent = med.name || 'Unknown Medication';
+                                        }
+                                    })
+                                    .catch(error => {
+                                        console.error('Error fetching medication details:', error);
+                                        nameDiv.textContent = med.name || 'Unknown Medication';
+                                    });
                                     
                                     detailsDiv.appendChild(nameDiv);
                                     
@@ -389,12 +545,16 @@
                                     // Add the medication item to the list
                                     medicationListElement.appendChild(medicationItem);
                                 });
-                                
-                                // Show the modal
-                                document.getElementById('pictorial-modal').style.display = 'block';
-                            } else {
-                                alert('No medication information found in the discharge letter. Please check the text and try again.');
+                            } else if (dischargeText.trim()) {
+                                // Only show message if there was discharge text but no medications found
+                                const noMedsMessage = document.createElement('p');
+                                noMedsMessage.className = 'no-meds-message';
+                                noMedsMessage.textContent = 'No medications found in the discharge letter. Use the search box below to add medications.';
+                                medicationListElement.appendChild(noMedsMessage);
                             }
+                            
+                            // Show the modal
+                            document.getElementById('pictorial-modal').style.display = 'block';
                         } catch (error) {
                             console.error('Error parsing discharge letter:', error);
                             alert('Error parsing discharge letter: ' + error.message);
@@ -428,6 +588,211 @@
                 pictorialModal.style.display = "none";
             }
         };
+        
+        // Store the current PDF filename when a PDF is generated
+        let currentPdfFilename = null;
+        
+        // Function to clean up temporary files
+        function cleanupTempFiles(filename) {
+            fetch('/cleanup_temp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ filename: filename })
+            })
+            .then(response => response.json())
+            .catch(error => console.error('Error cleaning up temp files:', error));
+        }
+        
+        // Clean up when user closes the window or navigates away
+        window.addEventListener('beforeunload', function() {
+            // Clean up all temporary files
+            cleanupTempFiles(null);
+        });
+        
+        // Handle medication search for leaflet modal
+        const searchInputLeaflet = document.getElementById('medication-search-leaflet');
+        const searchResultsLeaflet = document.getElementById('search-results-leaflet');
+        
+        searchInputLeaflet.addEventListener('input', function() {
+            const searchTerm = this.value.trim();
+            if (searchTerm.length < 2) {
+                searchResultsLeaflet.innerHTML = '';
+                return;
+            }
+            
+            // Search for medications
+            fetch('/search_medications', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ searchTerm: searchTerm })
+            })
+            .then(response => response.json())
+            .then(data => {
+                searchResultsLeaflet.innerHTML = '';
+                
+                if (data.status === 'success' && data.medications.length > 0) {
+                    data.medications.forEach(med => {
+                        const resultItem = document.createElement('div');
+                        resultItem.className = 'search-result-item';
+                        
+                        const nameSpan = document.createElement('div');
+                        nameSpan.className = 'search-result-name';
+                        nameSpan.textContent = med.name;
+                        
+                        const formSpan = document.createElement('div');
+                        formSpan.className = 'search-result-formulation';
+                        formSpan.textContent = med.formulation;
+                        
+                        resultItem.appendChild(nameSpan);
+                        resultItem.appendChild(formSpan);
+                        
+                        // Add click event to add medication to the list
+                        resultItem.addEventListener('click', function() {
+                            addMedicationToList('medication-list-leaflet', med);
+                            searchInputLeaflet.value = '';
+                            searchResultsLeaflet.innerHTML = '';
+                        });
+                        
+                        searchResultsLeaflet.appendChild(resultItem);
+                    });
+                } else {
+                    const noResults = document.createElement('div');
+                    noResults.className = 'search-result-item';
+                    noResults.textContent = 'No medications found';
+                    searchResultsLeaflet.appendChild(noResults);
+                }
+            })
+            .catch(error => {
+                console.error('Error searching medications:', error);
+                searchResultsLeaflet.innerHTML = '<div class="search-result-item">Error searching medications</div>';
+            });
+        });
+        
+        // Handle medication search for pictorial modal
+        const searchInputPictorial = document.getElementById('medication-search-pictorial');
+        const searchResultsPictorial = document.getElementById('search-results-pictorial');
+        
+        searchInputPictorial.addEventListener('input', function() {
+            const searchTerm = this.value.trim();
+            if (searchTerm.length < 2) {
+                searchResultsPictorial.innerHTML = '';
+                return;
+            }
+            
+            // Search for medications
+            fetch('/search_medications', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ searchTerm: searchTerm })
+            })
+            .then(response => response.json())
+            .then(data => {
+                searchResultsPictorial.innerHTML = '';
+                
+                if (data.status === 'success' && data.medications.length > 0) {
+                    data.medications.forEach(med => {
+                        const resultItem = document.createElement('div');
+                        resultItem.className = 'search-result-item';
+                        
+                        const nameSpan = document.createElement('div');
+                        nameSpan.className = 'search-result-name';
+                        nameSpan.textContent = med.name;
+                        
+                        const formSpan = document.createElement('div');
+                        formSpan.className = 'search-result-formulation';
+                        formSpan.textContent = med.formulation;
+                        
+                        resultItem.appendChild(nameSpan);
+                        resultItem.appendChild(formSpan);
+                        
+                        // Add click event to add medication to the list
+                        resultItem.addEventListener('click', function() {
+                            addMedicationToList('medication-list-pictorial', med);
+                            searchInputPictorial.value = '';
+                            searchResultsPictorial.innerHTML = '';
+                        });
+                        
+                        searchResultsPictorial.appendChild(resultItem);
+                    });
+                } else {
+                    const noResults = document.createElement('div');
+                    noResults.className = 'search-result-item';
+                    noResults.textContent = 'No medications found';
+                    searchResultsPictorial.appendChild(noResults);
+                }
+            })
+            .catch(error => {
+                console.error('Error searching medications:', error);
+                searchResultsPictorial.innerHTML = '<div class="search-result-item">Error searching medications</div>';
+            });
+        });
+        
+        // Function to add a medication to the list
+        function addMedicationToList(listId, medication) {
+            const medicationListElement = document.getElementById(listId);
+            
+            // Remove 'no medications' message if present
+            const noMedsMessage = medicationListElement.querySelector('.no-meds-message');
+            if (noMedsMessage) {
+                noMedsMessage.remove();
+            }
+            
+            // Create medication item
+            const medicationItem = document.createElement('div');
+            medicationItem.className = 'medication-item';
+            
+            // Create toggle switch
+            const toggleLabel = document.createElement('label');
+            toggleLabel.className = 'switch medication-toggle';
+            
+            const toggleInput = document.createElement('input');
+            toggleInput.type = 'checkbox';
+            toggleInput.checked = true; // Default to checked for manually added medications
+            toggleInput.dataset.medicationName = medication.name;
+            toggleInput.dataset.medicationFormulation = medication.formulation;
+            toggleInput.dataset.isManuallyAdded = 'true';
+            
+            const toggleSlider = document.createElement('span');
+            toggleSlider.className = 'slider';
+            
+            toggleLabel.appendChild(toggleInput);
+            toggleLabel.appendChild(toggleSlider);
+            
+            // Create medication details
+            const detailsDiv = document.createElement('div');
+            detailsDiv.className = 'medication-details';
+            
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'medication-name';
+            nameDiv.textContent = medication.name + ' (' + medication.formulation + ')';
+            
+            // Add PDF info if available
+            const pdfInfo = document.createElement('div');
+            pdfInfo.className = 'medication-info';
+            
+            if (medication.pdfAvailable) {
+                pdfInfo.textContent = 'PDF available: ' + medication.name + ' ' + medication.formulation;
+            } else {
+                pdfInfo.textContent = 'No matching PDF available';
+                pdfInfo.style.color = '#ff6666';
+            }
+            
+            detailsDiv.appendChild(nameDiv);
+            detailsDiv.appendChild(pdfInfo);
+            
+            // Add elements to the medication item
+            medicationItem.appendChild(toggleLabel);
+            medicationItem.appendChild(detailsDiv);
+            
+            // Add the medication item to the list
+            medicationListElement.appendChild(medicationItem);
+        }
 
         // Generate leaflets for selected medications
         document.getElementById('generate-leaflet-btn').addEventListener('click', function() {
@@ -446,41 +811,58 @@
             const medications = extractMedicationsFromDischargeLetter(dischargeText);
             
             // Get selected medications
-            const selectedMedications = Array.from(checkboxes).map(checkbox => {
-                const index = parseInt(checkbox.dataset.medicationIndex);
-                return medications[index];
+            const medicationNames = [];
+            
+            Array.from(checkboxes).forEach(checkbox => {
+                // Check if this is a manually added medication
+                if (checkbox.dataset.isManuallyAdded === 'true') {
+                    medicationNames.push(checkbox.dataset.medicationName + ' ' + checkbox.dataset.medicationFormulation);
+                } else {
+                    // This is a medication from the discharge letter
+                    const index = parseInt(checkbox.dataset.medicationIndex);
+                    medicationNames.push(medications[index].name || '');
+                }
             });
             
-            // Generate leaflets for each selected medication
-            selectedMedications.forEach(med => {
-                // Prepare data for the leaflet - only send medication name
-                const formData = {
-                    medicationName: med.name || ''
-                };
-                
-                // Send request to generate leaflet
-                fetch('/generate_leaflet', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(formData)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
+            const formData = {
+                medicationNames: medicationNames
+            };
+            
+            // Clean up previous PDF if exists
+            if (currentPdfFilename) {
+                cleanupTempFiles(currentPdfFilename);
+            }
+            
+            // Send request to generate leaflets for all selected medications
+            fetch('/generate_leaflet', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    if (data.type === 'pdf') {
+                        // Store the current PDF filename for cleanup
+                        currentPdfFilename = data.pdf_path.split('/').pop();
+                        
+                        // Open the merged PDF in a new window/tab
+                        window.open(data.pdf_path, '_blank');
+                    } else if (data.type === 'html') {
                         // Create a new window and write the HTML to it
                         const newWindow = window.open('', '_blank');
                         newWindow.document.write(data.html);
                         newWindow.document.close();
-                    } else {
-                        alert('Error generating leaflet: ' + data.message);
                     }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred while generating the leaflet.');
-                });
+                } else {
+                    alert('Error generating leaflet: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while generating the leaflet.');
             });
             
             // Close the modal
@@ -504,41 +886,58 @@
             const medications = extractMedicationsFromDischargeLetter(dischargeText);
             
             // Get selected medications
-            const selectedMedications = Array.from(checkboxes).map(checkbox => {
-                const index = parseInt(checkbox.dataset.medicationIndex);
-                return medications[index];
+            const medicationNames = [];
+            
+            Array.from(checkboxes).forEach(checkbox => {
+                // Check if this is a manually added medication
+                if (checkbox.dataset.isManuallyAdded === 'true') {
+                    medicationNames.push(checkbox.dataset.medicationName + ' ' + checkbox.dataset.medicationFormulation);
+                } else {
+                    // This is a medication from the discharge letter
+                    const index = parseInt(checkbox.dataset.medicationIndex);
+                    medicationNames.push(medications[index].name || '');
+                }
             });
             
-            // Generate pictorials for each selected medication
-            selectedMedications.forEach(med => {
-                // Prepare data for the pictorial - only send medication name
-                const formData = {
-                    medicationName: med.name || ''
-                };
-                
-                // Send request to generate pictorial
-                fetch('/generate_pictorial', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(formData)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
+            const formData = {
+                medicationNames: medicationNames
+            };
+            
+            // Clean up previous PDF if exists
+            if (currentPdfFilename) {
+                cleanupTempFiles(currentPdfFilename);
+            }
+            
+            // Send request to generate pictorials for all selected medications
+            fetch('/generate_pictorial', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    if (data.type === 'pdf') {
+                        // Store the current PDF filename for cleanup
+                        currentPdfFilename = data.pdf_path.split('/').pop();
+                        
+                        // Open the merged PDF in a new window/tab
+                        window.open(data.pdf_path, '_blank');
+                    } else if (data.type === 'html') {
                         // Create a new window and write the HTML to it
                         const newWindow = window.open('', '_blank');
                         newWindow.document.write(data.html);
                         newWindow.document.close();
-                    } else {
-                        alert('Error generating pictorial: ' + data.message);
                     }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred while generating the pictorial.');
-                });
+                } else {
+                    alert('Error generating pictorial: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while generating the pictorial.');
             });
             
             // Close the modal
