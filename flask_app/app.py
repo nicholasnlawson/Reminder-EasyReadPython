@@ -83,22 +83,7 @@ def original():
         # If the file is not found, return a simple message
         return f"Original HTML file not found at: {ORIGINAL_HTML_PATH}"
 
-@app.route('/extract_medications', methods=['POST'])
-def extract_medications():
-    """
-    This route is used to extract medication information from a discharge letter.
-    The actual extraction is done client-side using JavaScript.
-    """
-    # Get the discharge letter text from the request
-    data = request.json
-    discharge_text = data.get('discharge_text', '')
-    
-    # We'll just return a success response, as the actual extraction
-    # will be handled by the JavaScript function
-    return jsonify({
-        'status': 'success',
-        'message': 'Use the extractMedicationsFromDischargeLetter function in the client-side JavaScript'
-    })
+
 
 # Define medication keyword mappings
 def find_matching_pdf(medication_name, pdf_type):
@@ -644,7 +629,7 @@ def medications_list_check(medication_names):
     """
     Check if the medication_names list is valid
     """
-    return medication_names and len(medication_names) > 0
+    return medication_names and isinstance(medication_names, list) and len(medication_names) > 0
 
 
 def merge_pdfs(pdf_files, output_path):
@@ -722,23 +707,7 @@ def get_medication_details():
         'pdfPictorialFilename': pdf_pictorial if pdf_pictorial else None
     })
 
-def medications_list_check(medications_list):
-    """
-    Check if the medications list is valid.
-    """
-    return medications_list and isinstance(medications_list, list) and len(medications_list) > 0
 
-def merge_pdfs(pdf_files, output_filepath):
-    """
-    Merge multiple PDF files into a single PDF.
-    """
-    merger = PyPDF2.PdfMerger()
-    
-    for pdf_file in pdf_files:
-        merger.append(pdf_file)
-    
-    merger.write(output_filepath)
-    merger.close()
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)
