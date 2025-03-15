@@ -108,6 +108,85 @@
         .submit-button:hover {
             background-color: #45a049;
         }
+        /* Additional styles for medication list */
+        .medication-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        .medication-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .medication-item:last-child {
+            border-bottom: none;
+        }
+        .medication-toggle {
+            margin-right: 15px;
+        }
+        .medication-details {
+            flex: 1;
+        }
+        .medication-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .medication-info {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .no-meds-message {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 20px;
+        }
+        .form-actions {
+            text-align: right;
+            margin-top: 15px;
+        }
+        /* Toggle switch styles */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #4CAF50;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
     </style>
     <!-- Include our medication extractor JavaScript -->
     <script src="/static/js/medication-extractor.js"></script>
@@ -128,29 +207,13 @@
         <div class="modal-content">
             <span class="close" id="close-leaflet">&times;</span>
             <h2>Generate Patient Information Leaflet</h2>
-            <form id="leaflet-form">
-                <div class="form-group">
-                    <label for="medication-name">Medication Name</label>
-                    <input type="text" id="medication-name" name="medicationName" required>
-                </div>
-                <div class="form-group">
-                    <label for="dosage">Dosage</label>
-                    <input type="text" id="dosage" name="dosage" required>
-                </div>
-                <div class="form-group">
-                    <label for="frequency">Frequency</label>
-                    <input type="text" id="frequency" name="frequency" required>
-                </div>
-                <div class="form-group">
-                    <label for="purpose">Purpose</label>
-                    <textarea id="purpose" name="purpose" required></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="side-effects">Common Side Effects</label>
-                    <textarea id="side-effects" name="sideEffects" required></textarea>
-                </div>
-                <button type="submit" class="submit-button">Generate Leaflet</button>
-            </form>
+            <div id="medication-list-leaflet" class="medication-list">
+                <!-- Medications will be added here dynamically -->
+                <p class="no-meds-message">No medications found in the discharge letter.</p>
+            </div>
+            <div class="form-actions">
+                <button type="button" id="generate-leaflet-btn" class="submit-button">Generate Selected Leaflets</button>
+            </div>
         </div>
     </div>
 
@@ -159,33 +222,13 @@
         <div class="modal-content">
             <span class="close" id="close-pictorial">&times;</span>
             <h2>Create Easy Read Pictorial</h2>
-            <form id="pictorial-form">
-                <div class="form-group">
-                    <label for="med-name">Medication Name</label>
-                    <input type="text" id="med-name" name="medicationName" required>
-                </div>
-                <div class="form-group">
-                    <label for="time-of-day">Time of Day</label>
-                    <select id="time-of-day" name="timeOfDay" required>
-                        <option value="">Select time...</option>
-                        <option value="morning">Morning</option>
-                        <option value="noon">Noon</option>
-                        <option value="afternoon">Afternoon</option>
-                        <option value="evening">Evening</option>
-                        <option value="bedtime">Bedtime</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="with-food">Take with Food?</label>
-                    <select id="with-food" name="withFood" required>
-                        <option value="">Select option...</option>
-                        <option value="yes">Yes</option>
-                        <option value="no">No</option>
-                        <option value="optional">Optional</option>
-                    </select>
-                </div>
-                <button type="submit" class="submit-button">Create Pictorial</button>
-            </form>
+            <div id="medication-list-pictorial" class="medication-list">
+                <!-- Medications will be added here dynamically -->
+                <p class="no-meds-message">No medications found in the discharge letter.</p>
+            </div>
+            <div class="form-actions">
+                <button type="button" id="generate-pictorial-btn" class="submit-button">Create Selected Pictorials</button>
+            </div>
         </div>
     </div>
 
@@ -225,24 +268,49 @@
                             const medications = extractMedicationsFromDischargeLetter(dischargeText);
                             
                             if (medications && medications.length > 0) {
-                                // Use the first medication for the form
-                                const med = medications[0];
+                                // Clear previous medications
+                                const medicationListElement = document.getElementById('medication-list-leaflet');
+                                medicationListElement.innerHTML = '';
                                 
-                                // Fill in the form fields
-                                document.getElementById('medication-name').value = med.name || '';
-                                document.getElementById('dosage').value = med.dosage || '';
-                                document.getElementById('frequency').value = med.frequency || '';
-                                
-                                // Use the condition if available, otherwise default text
-                                let purposeText = 'Treatment for ';
-                                if (med.condition && med.condition.trim() !== '') {
-                                    purposeText += med.condition;
-                                } else {
-                                    purposeText += 'your condition';
-                                }
-                                document.getElementById('purpose').value = purposeText;
-                                
-                                document.getElementById('side-effects').value = 'Common side effects may include drowsiness, nausea, and headache. Please consult your doctor for a complete list.';
+                                // Add each medication to the list with a toggle switch
+                                medications.forEach((med, index) => {
+                                    if (med.isExcludedFromCharts) return; // Skip excluded medications
+                                    
+                                    const medicationItem = document.createElement('div');
+                                    medicationItem.className = 'medication-item';
+                                    
+                                    // Create toggle switch
+                                    const toggleLabel = document.createElement('label');
+                                    toggleLabel.className = 'switch medication-toggle';
+                                    
+                                    const toggleInput = document.createElement('input');
+                                    toggleInput.type = 'checkbox';
+                                    toggleInput.checked = true; // Default to checked
+                                    toggleInput.dataset.medicationIndex = index;
+                                    
+                                    const toggleSlider = document.createElement('span');
+                                    toggleSlider.className = 'slider';
+                                    
+                                    toggleLabel.appendChild(toggleInput);
+                                    toggleLabel.appendChild(toggleSlider);
+                                    
+                                    // Create medication details
+                                    const detailsDiv = document.createElement('div');
+                                    detailsDiv.className = 'medication-details';
+                                    
+                                    const nameDiv = document.createElement('div');
+                                    nameDiv.className = 'medication-name';
+                                    nameDiv.textContent = med.name || 'Unknown Medication';
+                                    
+                                    detailsDiv.appendChild(nameDiv);
+                                    
+                                    // Add elements to the medication item
+                                    medicationItem.appendChild(toggleLabel);
+                                    medicationItem.appendChild(detailsDiv);
+                                    
+                                    // Add the medication item to the list
+                                    medicationListElement.appendChild(medicationItem);
+                                });
                                 
                                 // Show the modal
                                 document.getElementById('leaflet-modal').style.display = 'block';
@@ -251,8 +319,7 @@
                             }
                         } catch (error) {
                             console.error('Error parsing discharge letter:', error);
-                            // Show the empty modal if parsing fails
-                            document.getElementById('leaflet-modal').style.display = 'block';
+                            alert('Error parsing discharge letter: ' + error.message);
                         }
                     };
                     buttonContainer.appendChild(leafletBtn);
@@ -279,54 +346,49 @@
                             const medications = extractMedicationsFromDischargeLetter(dischargeText);
                             
                             if (medications && medications.length > 0) {
-                                // Use the first medication for the form
-                                const med = medications[0];
+                                // Clear previous medications
+                                const medicationListElement = document.getElementById('medication-list-pictorial');
+                                medicationListElement.innerHTML = '';
                                 
-                                // Fill in the form fields
-                                document.getElementById('med-name').value = med.name || '';
-                                
-                                // Determine time of day from timing or frequency
-                                let timeOfDay = 'morning';
-                                if (med.timing) {
-                                    if (med.timing.includes('night') || med.timing.includes('bedtime')) {
-                                        timeOfDay = 'bedtime';
-                                    } else if (med.timing.includes('evening')) {
-                                        timeOfDay = 'evening';
-                                    } else if (med.timing.includes('afternoon')) {
-                                        timeOfDay = 'afternoon';
-                                    } else if (med.timing.includes('morning')) {
-                                        timeOfDay = 'morning';
-                                    }
-                                }
-                                
-                                // Set the time of day select
-                                const timeSelect = document.getElementById('time-of-day');
-                                for (let i = 0; i < timeSelect.options.length; i++) {
-                                    if (timeSelect.options[i].value === timeOfDay) {
-                                        timeSelect.selectedIndex = i;
-                                        break;
-                                    }
-                                }
-                                
-                                // Set with food based on extracted info
-                                let withFoodValue = 'yes'; // Default
-                                if (med.withFood) {
-                                    if (med.withFood === 'with food') {
-                                        withFoodValue = 'yes';
-                                    } else if (med.withFood === 'without food') {
-                                        withFoodValue = 'no';
-                                    } else {
-                                        withFoodValue = 'optional';
-                                    }
-                                }
-                                
-                                const foodSelect = document.getElementById('with-food');
-                                for (let i = 0; i < foodSelect.options.length; i++) {
-                                    if (foodSelect.options[i].value === withFoodValue) {
-                                        foodSelect.selectedIndex = i;
-                                        break;
-                                    }
-                                }
+                                // Add each medication to the list with a toggle switch
+                                medications.forEach((med, index) => {
+                                    if (med.isExcludedFromCharts) return; // Skip excluded medications
+                                    
+                                    const medicationItem = document.createElement('div');
+                                    medicationItem.className = 'medication-item';
+                                    
+                                    // Create toggle switch
+                                    const toggleLabel = document.createElement('label');
+                                    toggleLabel.className = 'switch medication-toggle';
+                                    
+                                    const toggleInput = document.createElement('input');
+                                    toggleInput.type = 'checkbox';
+                                    toggleInput.checked = true; // Default to checked
+                                    toggleInput.dataset.medicationIndex = index;
+                                    
+                                    const toggleSlider = document.createElement('span');
+                                    toggleSlider.className = 'slider';
+                                    
+                                    toggleLabel.appendChild(toggleInput);
+                                    toggleLabel.appendChild(toggleSlider);
+                                    
+                                    // Create medication details
+                                    const detailsDiv = document.createElement('div');
+                                    detailsDiv.className = 'medication-details';
+                                    
+                                    const nameDiv = document.createElement('div');
+                                    nameDiv.className = 'medication-name';
+                                    nameDiv.textContent = med.name || 'Unknown Medication';
+                                    
+                                    detailsDiv.appendChild(nameDiv);
+                                    
+                                    // Add elements to the medication item
+                                    medicationItem.appendChild(toggleLabel);
+                                    medicationItem.appendChild(detailsDiv);
+                                    
+                                    // Add the medication item to the list
+                                    medicationListElement.appendChild(medicationItem);
+                                });
                                 
                                 // Show the modal
                                 document.getElementById('pictorial-modal').style.display = 'block';
@@ -335,8 +397,7 @@
                             }
                         } catch (error) {
                             console.error('Error parsing discharge letter:', error);
-                            // Show the empty modal if parsing fails
-                            document.getElementById('pictorial-modal').style.display = 'block';
+                            alert('Error parsing discharge letter: ' + error.message);
                         }
                     };
                     buttonContainer.appendChild(pictorialBtn);
@@ -368,77 +429,120 @@
             }
         };
 
-        // Form submission handling
-        document.getElementById('leaflet-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formData = {
-                medicationName: document.getElementById('medication-name').value,
-                dosage: document.getElementById('dosage').value,
-                frequency: document.getElementById('frequency').value,
-                purpose: document.getElementById('purpose').value,
-                sideEffects: document.getElementById('side-effects').value
-            };
+        // Generate leaflets for selected medications
+        document.getElementById('generate-leaflet-btn').addEventListener('click', function() {
+            const medicationListElement = document.getElementById('medication-list-leaflet');
+            const checkboxes = medicationListElement.querySelectorAll('input[type="checkbox"]:checked');
             
-            fetch('/generate_leaflet', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(formData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    // Create a new window and write the HTML to it
-                    const newWindow = window.open('', '_blank');
-                    newWindow.document.write(data.html);
-                    newWindow.document.close();
-                    
-                    // Close the modal
-                    leafletModal.style.display = "none";
-                } else {
-                    alert('Error generating leaflet: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while generating the leaflet.');
+            if (checkboxes.length === 0) {
+                alert('Please select at least one medication.');
+                return;
+            }
+            
+            // Get all medications from the iframe
+            const iframe = document.getElementById('chart-generator-iframe');
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            const dischargeText = iframeDoc.getElementById('discharge-letter').value;
+            const medications = extractMedicationsFromDischargeLetter(dischargeText);
+            
+            // Get selected medications
+            const selectedMedications = Array.from(checkboxes).map(checkbox => {
+                const index = parseInt(checkbox.dataset.medicationIndex);
+                return medications[index];
             });
+            
+            // Generate leaflets for each selected medication
+            selectedMedications.forEach(med => {
+                // Prepare data for the leaflet - only send medication name
+                const formData = {
+                    medicationName: med.name || ''
+                };
+                
+                // Send request to generate leaflet
+                fetch('/generate_leaflet', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Create a new window and write the HTML to it
+                        const newWindow = window.open('', '_blank');
+                        newWindow.document.write(data.html);
+                        newWindow.document.close();
+                    } else {
+                        alert('Error generating leaflet: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while generating the leaflet.');
+                });
+            });
+            
+            // Close the modal
+            leafletModal.style.display = "none";
         });
         
-        document.getElementById('pictorial-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formData = {
-                medicationName: document.getElementById('med-name').value,
-                timeOfDay: document.getElementById('time-of-day').value,
-                withFood: document.getElementById('with-food').value
-            };
+        // Generate pictorials for selected medications
+        document.getElementById('generate-pictorial-btn').addEventListener('click', function() {
+            const medicationListElement = document.getElementById('medication-list-pictorial');
+            const checkboxes = medicationListElement.querySelectorAll('input[type="checkbox"]:checked');
             
-            fetch('/generate_pictorial', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(formData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    // Create a new window and write the HTML to it
-                    const newWindow = window.open('', '_blank');
-                    newWindow.document.write(data.html);
-                    newWindow.document.close();
-                    
-                    // Close the modal
-                    pictorialModal.style.display = "none";
-                } else {
-                    alert('Error generating pictorial: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while generating the pictorial.');
+            if (checkboxes.length === 0) {
+                alert('Please select at least one medication.');
+                return;
+            }
+            
+            // Get all medications from the iframe
+            const iframe = document.getElementById('chart-generator-iframe');
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            const dischargeText = iframeDoc.getElementById('discharge-letter').value;
+            const medications = extractMedicationsFromDischargeLetter(dischargeText);
+            
+            // Get selected medications
+            const selectedMedications = Array.from(checkboxes).map(checkbox => {
+                const index = parseInt(checkbox.dataset.medicationIndex);
+                return medications[index];
             });
+            
+            // Generate pictorials for each selected medication
+            selectedMedications.forEach(med => {
+                // Prepare data for the pictorial - only send medication name
+                const formData = {
+                    medicationName: med.name || ''
+                };
+                
+                // Send request to generate pictorial
+                fetch('/generate_pictorial', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Create a new window and write the HTML to it
+                        const newWindow = window.open('', '_blank');
+                        newWindow.document.write(data.html);
+                        newWindow.document.close();
+                    } else {
+                        alert('Error generating pictorial: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while generating the pictorial.');
+                });
+            });
+            
+            // Close the modal
+            pictorialModal.style.display = "none";
         });
     </script>
 </body>

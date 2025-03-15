@@ -44,16 +44,15 @@ def extract_medications():
 @app.route('/generate_leaflet', methods=['POST'])
 def generate_leaflet():
     """
-    Generate a patient information leaflet based on the provided medication information.
+    Generate a patient information leaflet based on the provided medication name.
+    In a production environment, this would retrieve a pre-made leaflet from a database.
     """
     data = request.json
     medication_name = data.get('medicationName', '')
-    dosage = data.get('dosage', '')
-    frequency = data.get('frequency', '')
-    purpose = data.get('purpose', '')
-    side_effects = data.get('sideEffects', '')
     
-    # Generate a simple HTML leaflet
+    # Generate a placeholder HTML leaflet
+    # In a real application, you would look up the medication in a database
+    # and retrieve the corresponding pre-made leaflet
     html = f"""
     <!DOCTYPE html>
     <html lang="en">
@@ -116,30 +115,19 @@ def generate_leaflet():
         </div>
         
         <div class="warning">
-            <strong>Important:</strong> This is a simplified information leaflet. Always consult your healthcare provider or the official medication guide for complete information.
+            <strong>Important:</strong> This is a placeholder for a pre-made patient information leaflet.
+        </div>
+        
+        <div class="section">
+            <h3>About This Leaflet</h3>
+            <p>This is a placeholder for the pre-made patient information leaflet for {medication_name}.</p>
+            <p>In a production environment, this would be replaced with the actual leaflet content from a database.</p>
         </div>
         
         <div class="section">
             <h3>Medication Information</h3>
             <p><strong>Name:</strong> {medication_name}</p>
-            <p><strong>Dosage:</strong> {dosage}</p>
-            <p><strong>How to take:</strong> {frequency}</p>
-        </div>
-        
-        <div class="section">
-            <h3>What is this medication for?</h3>
-            <p>{purpose}</p>
-        </div>
-        
-        <div class="section">
-            <h3>Possible Side Effects</h3>
-            <p>{side_effects}</p>
-            <p>If you experience severe side effects or an allergic reaction (such as rash, itching, swelling, severe dizziness, or trouble breathing), seek medical help right away.</p>
-        </div>
-        
-        <div class="section">
-            <h3>Storage Information</h3>
-            <p>Store at room temperature away from moisture and heat. Keep out of reach of children and pets.</p>
+            <p>Complete information about dosage, administration, and other details would be included here.</p>
         </div>
         
         <div class="footer">
@@ -159,38 +147,15 @@ def generate_leaflet():
 @app.route('/generate_pictorial', methods=['POST'])
 def generate_pictorial():
     """
-    Generate an easy read pictorial based on the provided medication information.
+    Generate an easy read pictorial based on the provided medication name.
+    In a production environment, this would retrieve a pre-made pictorial from a database.
     """
     data = request.json
     medication_name = data.get('medicationName', '')
-    time_of_day = data.get('timeOfDay', '')
-    with_food = data.get('withFood', '')
     
-    # Map time of day to an emoji
-    time_emoji = {
-        'morning': '🌅',
-        'noon': '☀️',
-        'afternoon': '🌤️',
-        'evening': '🌆',
-        'bedtime': '🌙'
-    }.get(time_of_day, '⏰')
-    
-    # Map with food to an emoji
-    food_emoji = {
-        'yes': '🍽️',
-        'no': '❌🍽️',
-        'optional': '🍽️❓'
-    }.get(with_food, '🍽️')
-    
-    # Map food instructions
-    food_instructions = {
-        'yes': 'Take with food',
-        'no': 'Take without food',
-        'optional': 'Can take with or without food'
-    }
-    food_instruction = food_instructions.get(with_food, 'Take as directed')
-    
-    # Generate a simple HTML pictorial
+    # Generate a placeholder HTML pictorial
+    # In a real application, you would look up the medication in a database
+    # and retrieve the corresponding pre-made pictorial
     html = f"""
     <!DOCTYPE html>
     <html lang="en">
@@ -257,7 +222,7 @@ def generate_pictorial():
         </style>
     </head>
     <body>
-        <h1>Taking My Medicine</h1>
+        <h1>Easy Read Pictorial</h1>
         
         <div class="pictorial">
             <div class="card">
@@ -266,18 +231,8 @@ def generate_pictorial():
             </div>
             
             <div class="card">
-                <div class="emoji">{time_emoji}</div>
-                <div class="instruction">Take at {time_of_day}</div>
-            </div>
-            
-            <div class="card">
-                <div class="emoji">{food_emoji}</div>
-                <div class="instruction">{food_instruction}</div>
-            </div>
-            
-            <div class="card">
-                <div class="emoji">💧</div>
-                <div class="instruction">Take with water</div>
+                <p>This is a placeholder for the pre-made easy read pictorial for {medication_name}.</p>
+                <p>In a production environment, this would be replaced with the actual pictorial content from a database.</p>
             </div>
         </div>
         
@@ -303,4 +258,4 @@ def test_page():
     return send_from_directory('static', 'test_discharge_letter.html')
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5004)
+    app.run(debug=True, port=5001)

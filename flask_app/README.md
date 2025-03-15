@@ -22,7 +22,7 @@ This Flask application serves as an interface for the Medication Chart Generator
 
 4. Open your web browser and navigate to:
    ```
-   http://127.0.0.1:5001
+   http://127.0.0.1:5004
    ```
 
 ## Features
