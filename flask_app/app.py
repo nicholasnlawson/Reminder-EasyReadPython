@@ -83,16 +83,44 @@ def original():
         # If the file is not found, return a simple message
         return f"Original HTML file not found at: {ORIGINAL_HTML_PATH}"
 
-
+# Normalize medication form terms
+def normalize_form(form_term):
+    """
+    Normalize form terms to handle aliases
+    """
+    form_aliases = {
+        "tablet": ["tablet", "tablets", "tabs", "tab"],
+        "capsule": ["capsule", "capsules", "caps", "cap"],
+        "inhaler": ["inhaler", "inhalator", "inhale", "inh"],
+        "spray": ["spray", "sprays"],
+        "liquid": ["liquid", "solution", "suspension", "syrup", "soln"],
+        "gel": ["gel", "jelly"],
+        "cream": ["cream", "crm", "ointment"],
+        "patch": ["patch", "patches", "plaster"]
+    }
+    
+    form_term = form_term.lower()
+    
+    # Check if the form term matches any of our known aliases
+    for normalized_form, aliases in form_aliases.items():
+        if form_term in aliases:
+            return normalized_form
+            
+    # If no match found, return the original term
+    return form_term
 
 # Define medication keyword mappings
 def find_matching_pdf(medication_name, pdf_type):
     """
     Find the most appropriate PDF based on medication name and keywords.
-    pdf_type should be either 'leaflets' or 'pictorials'
+    pdf_type should be either 'leaflet' or 'pictorial'
     """
     # Convert medication name to lowercase for case-insensitive matching
     med_name_lower = medication_name.lower()
+    
+    # Convert pdf_type to the correct folder name
+    pdf_folder = pdf_type + 's' if not pdf_type.endswith('s') else pdf_type
+    pdf_key = 'leaflet' if 'leaflet' in pdf_type else 'pictorial'
     
     # Define keyword mappings for medications
     keyword_mappings = {
@@ -127,7 +155,7 @@ def find_matching_pdf(medication_name, pdf_type):
         'atorvastatin': {
             'tablet': {
                 'leaflet': 'atorvastatintabletleaflet.pdf',
-                'pictorial': 'atorvastatintabletpictrorial.pdf'
+                'pictorial': 'atorvastatintabletpictorial.pdf'
             }
         },
         'carbomer': {
@@ -167,7 +195,7 @@ def find_matching_pdf(medication_name, pdf_type):
             }
         },
         'mirtazapine': {
-            'tablets': {
+            'tablet': {
                 'leaflet': 'mirtazapinetabletleaflet.pdf',
                 'pictorial': 'mirtazapinetabletpictorial.pdf'
             }
@@ -183,6 +211,37 @@ def find_matching_pdf(medication_name, pdf_type):
                 'leaflet': 'trimbowpMDIleaflet.pdf',
                 'pictorial': 'trimbowpMDIpictorial.pdf'
             }
+        },
+        # Added new medications
+        'gtn': {
+            'spray': {
+                'leaflet': 'gtnsprayleaflet.pdf',
+                'pictorial': 'gtnspraypictorial.pdf'
+            }
+        },
+        'fludrocortisone': {
+            'tablet': {
+                'leaflet': 'fludrocortisonetabletleaflet.pdf',
+                'pictorial': 'fludrocortisonetabletpictorial.pdf'
+            }
+        },
+        'apixaban': {
+            'tablet': {
+                'leaflet': 'apixabantabletleaflet.pdf',
+                'pictorial': 'apixabantabletpictorial.pdf'
+            }
+        },
+        'loperamide': {
+            'capsule': {
+                'leaflet': 'loperamidecapsuleleaflet.pdf',
+                'pictorial': 'loperamidecapsulepictorial.pdf'
+            }
+        },
+        'amiodarone': {
+            'tablet': {
+                'leaflet': 'amiodaronetabletleaflet.pdf',
+                'pictorial': 'amiodaronetabletpictroial.pdf'  # Corrected to match actual filename
+            }
         }
     }
     
@@ -191,16 +250,24 @@ def find_matching_pdf(medication_name, pdf_type):
     best_score = 0
     
     # Determine which type of PDF we're looking for
-    pdf_key = 'leaflet' if pdf_type == 'leaflets' else 'pictorial'
+    pdf_key = 'leaflet' if 'leaflet' in pdf_type else 'pictorial'
     
     # Check each medication keyword
     for med_key, formulations in keyword_mappings.items():
         if med_key in med_name_lower:
             # Found a medication match, now check formulations
             for form_key, pdf_info in formulations.items():
-                if form_key in med_name_lower:
+                normalized_form = normalize_form(form_key)
+                # Check if any form term (or its alias) is in the med name
+                if any(alias in med_name_lower for alias in [
+                    form_key, 
+                    normalized_form, 
+                    f"{normalized_form}s", 
+                    f"{normalized_form[0:3]}", 
+                    f"{normalized_form[0:3]}s"
+                ]) or (form_key == 'tablet' and 'tab' in med_name_lower) or (form_key == 'capsule' and 'cap' in med_name_lower):
                     # Both medication and formulation match - this is a perfect match
-                    return pdf_info[pdf_key]
+                    return pdf_info[pdf_key] if pdf_key in pdf_info else None
                 else:
                     # Only medication matches, keep track of it as a potential match
                     # Score of 1 for medication match
@@ -267,6 +334,22 @@ def get_formatted_medication_name(med_name):
         },
         'carbomer': {
             'gel': 'Carbomer eye gel'
+        },
+        # Added new medications
+        'gtn': {
+            'spray': 'GTN spray'
+        },
+        'fludrocortisone': {
+            'tablet': 'Fludrocortisone tablets'
+        },
+        'apixaban': {
+            'tablet': 'Apixaban tablets'
+        },
+        'loperamide': {
+            'capsule': 'Loperamide capsules'
+        },
+        'amiodarone': {
+            'tablet': 'Amiodarone tablets'
         }
     }
     
@@ -275,7 +358,15 @@ def get_formatted_medication_name(med_name):
         if med_key in med_name_lower:
             # Found a medication match, now check formulations
             for form_key, formatted_name in formulations.items():
-                if form_key in med_name_lower:
+                normalized_form = normalize_form(form_key)
+                # Check for form aliases
+                if any(alias in med_name_lower for alias in [
+                    form_key, 
+                    normalized_form, 
+                    f"{normalized_form}s", 
+                    f"{normalized_form[0:3]}", 
+                    f"{normalized_form[0:3]}s"
+                ]):
                     # Both medication and formulation match
                     return formatted_name
             
@@ -304,14 +395,31 @@ def get_all_medications():
         {'name': 'Peptac', 'formulation': 'liquid'},
         {'name': 'Amlodipine', 'formulation': 'tablets'},
         {'name': 'Atorvastatin', 'formulation': 'tablets'},
-        {'name': 'Carbomer', 'formulation': 'eye gel'}
+        {'name': 'Carbomer', 'formulation': 'eye gel'},
+        # Added new medications
+        {'name': 'GTN', 'formulation': 'spray'},
+        {'name': 'Fludrocortisone', 'formulation': 'tablets'},
+        {'name': 'Apixaban', 'formulation': 'tablets'},
+        {'name': 'Loperamide', 'formulation': 'capsules'},
+        {'name': 'Amiodarone', 'formulation': 'tablets'}
     ]
     
     # Add PDF availability information
     for med in medications:
+        # Try with both combined name and individual components
         med_name = f"{med['name']} {med['formulation']}"
-        pdf_leaflet = find_matching_pdf(med_name, 'leaflets')
-        pdf_pictorial = find_matching_pdf(med_name, 'pictorials')
+        pdf_leaflet = find_matching_pdf(med_name, 'leaflet')
+        pdf_pictorial = find_matching_pdf(med_name, 'pictorial')
+        
+        # If not found, try with just the medication name
+        if pdf_leaflet is None and pdf_pictorial is None:
+            pdf_leaflet = find_matching_pdf(med['name'], 'leaflet')
+            pdf_pictorial = find_matching_pdf(med['name'], 'pictorial')
+            
+        # Print debug info
+        print(f"Checking: {med_name}")
+        print(f"  Leaflet: {pdf_leaflet}")
+        print(f"  Pictorial: {pdf_pictorial}")
         
         med['pdfAvailable'] = (pdf_leaflet is not None) or (pdf_pictorial is not None)
         med['pdfLeafletAvailable'] = pdf_leaflet is not None
@@ -706,7 +814,6 @@ def get_medication_details():
         'pdfLeafletFilename': pdf_leaflet if pdf_leaflet else None,
         'pdfPictorialFilename': pdf_pictorial if pdf_pictorial else None
     })
-
 
 
 if __name__ == '__main__':

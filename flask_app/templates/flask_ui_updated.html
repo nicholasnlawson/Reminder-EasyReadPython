@@ -49,15 +49,15 @@
             height: 100%;
             border: none;
         }
-        /* CSS to hide the warning banner in the iframe */
+        /* CSS to hide the warning banner in the iframe without creating a white bar */
         .hide-warning {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
-            height: 50px;
-            background-color: white;
+            height: 0;
             z-index: 1000;
+            overflow: hidden;
         }
         /* Modal styles */
         .modal {
@@ -259,7 +259,6 @@
     </div>
     
     <div class="iframe-container">
-        <!-- Add a div to cover the warning in the iframe -->
         <div class="hide-warning"></div>
         <iframe src="/original" title="Medication Chart Generator" id="chart-generator-iframe"></iframe>
     </div>
@@ -365,7 +364,7 @@
                                     
                                     const toggleInput = document.createElement('input');
                                     toggleInput.type = 'checkbox';
-                                    toggleInput.checked = false; // Default to unchecked (opt-in)
+                                    toggleInput.checked = med.shouldPreselect || false; // Check if medication should be preselected
                                     toggleInput.dataset.medicationIndex = index;
                                     
                                     const toggleSlider = document.createElement('span');
@@ -485,7 +484,7 @@
                                     
                                     const toggleInput = document.createElement('input');
                                     toggleInput.type = 'checkbox';
-                                    toggleInput.checked = false; // Default to unchecked (opt-in)
+                                    toggleInput.checked = med.shouldPreselect || false; // Check if medication should be preselected
                                     toggleInput.dataset.medicationIndex = index;
                                     
                                     const toggleSlider = document.createElement('span');

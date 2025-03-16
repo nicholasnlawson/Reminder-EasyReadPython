@@ -47,10 +47,51 @@ function extractMedicationsFromDischargeLetter(dischargeLetterText) {
         .trim();
 
     // Split the medication section into individual entries
-    const medicationEntries = medicationSection.split(/\n\s*\n/);
+    const medicationLines = medicationSection.split('\n');
+    const medicationEntries = [];
+    let currentEntry = '';
+    let currentIndentedLines = [];
+    
+    // Process the lines to keep indented lines associated with the medication entry
+    for (let i = 0; i < medicationLines.length; i++) {
+        const line = medicationLines[i];
+        // If the line starts with spaces and is not empty, it's an indented line
+        if (line.match(/^\s+\S/) && line.trim() !== '') {
+            currentIndentedLines.push(line);
+        }
+        // If the line doesn't start with spaces or is empty, it's a new entry
+        else {
+            // If we have a current entry, add it to the entries with its indented lines
+            if (currentEntry) {
+                medicationEntries.push({
+                    entry: currentEntry,
+                    indentedLines: currentIndentedLines
+                });
+                // Reset for the next entry
+                currentIndentedLines = [];
+            }
+            // Start a new entry if the line is not empty
+            if (line.trim() !== '') {
+                currentEntry = line;
+            } else {
+                currentEntry = '';
+            }
+        }
+    }
+    
+    // Add the last entry if there is one
+    if (currentEntry) {
+        medicationEntries.push({
+            entry: currentEntry,
+            indentedLines: currentIndentedLines
+        });
+    }
+    
     const medications = [];
 
-    for (const entry of medicationEntries) {
+    for (const entryObj of medicationEntries) {
+        const entry = entryObj.entry;
+        const indentedLines = entryObj.indentedLines;
         let name,
             dosage,
             instructions,
@@ -317,6 +358,23 @@ function extractMedicationsFromDischargeLetter(dischargeLetterText) {
             condition = conditionMatch[1].trim();
         }
 
+        // Check if any indented lines match our trigger phrases for preselection
+        let shouldPreselect = false;
+        const triggerPhrases = ['Existing Med', 'New Med', 'Hospital Supply', 'GP to Review'];
+        
+        if (indentedLines && indentedLines.length > 0) {
+            for (const line of indentedLines) {
+                const trimmedLine = line.trim();
+                for (const phrase of triggerPhrases) {
+                    if (trimmedLine.startsWith(phrase)) {
+                        shouldPreselect = true;
+                        break;
+                    }
+                }
+                if (shouldPreselect) break;
+            }
+        }
+
         const medicationObj = {
             name: name,
             dosage: dosage,
@@ -334,6 +392,7 @@ function extractMedicationsFromDischargeLetter(dischargeLetterText) {
             timing: timing,
             withFood: withFood,
             condition: condition,
+            shouldPreselect: shouldPreselect, // Add the preselection flag
             isPrn:
                 (instructions.toLowerCase().includes("prn") ||
                 instructions.toLowerCase().includes("when required") ||
