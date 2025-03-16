@@ -510,18 +510,21 @@
 
       function undoDeleteRow() {
         if (deletedRows.length > 0) {
-          const { row, index, chartType } = deletedRows.pop();
-          const tbody = document.querySelector(
-            `#${
-              chartType === "reminder" ? "chart" : "mar-chart"
-            }-container table tbody`
-          );
-          if (index >= tbody.children.length) {
-            tbody.appendChild(row);
+          const { row, index, parent } = deletedRows.pop();
+
+          // Use the stored parent reference
+          if (parent && parent.children) {
+            if (index >= parent.children.length) {
+              parent.appendChild(row);
+            } else {
+              parent.insertBefore(row, parent.children[index]);
+            }
+            redoStack.push({ row, index, parent });
           } else {
-            tbody.insertBefore(row, tbody.children[index]);
+            console.error(
+              "Cannot restore row - parent element is no longer available"
+            );
           }
-          redoStack.push({ row, index, chartType });
         }
       }
 
@@ -693,19 +696,22 @@
         );
 
         selectedReminderRows.forEach((row) => {
-          const index = Array.from(row.parentNode.children).indexOf(row);
-          deletedRows.push({ row, index, chartType: "reminder" });
+          const parent = row.parentNode;
+          const index = Array.from(parent.children).indexOf(row);
+          deletedRows.push({ row, index, chartType: "reminder", parent });
           row.remove();
         });
 
         selectedMARRows.forEach((row) => {
-          const index = Array.from(row.parentNode.children).indexOf(row);
-          deletedRows.push({ row, index, chartType: "mar" });
+          const parent = row.parentNode;
+          const index = Array.from(parent.children).indexOf(row);
+          deletedRows.push({ row, index, chartType: "mar", parent });
           row.remove();
         });
 
         redoStack = [];
       }
+
       const controlledDrugs = [
         "Alfentanil",
         "Amphetamine",

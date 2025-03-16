@@ -45,17 +45,11 @@ This Flask application serves as an interface for the Medication Chart Generator
 ## New Functionality
 
 ### Patient Information Leaflets
-Generate patient-friendly information leaflets that include:
-- Medication name, dosage, and frequency
-- Purpose of the medication
-- Common side effects
-- General administration instructions
-- Storage information
+Generate patient-friendly information leaflets:
+- provided by MaPPS
 
 ### Easy Read Pictorials
-Create visual guides for medication administration that include:
-- Medication name
-- Time of day to take the medication (morning, noon, afternoon, evening, or bedtime)
-- Whether to take with food, without food, or if it's optional
+Create visual guides for medications:
+- provided by MaPPs
 
-Both new features open the generated content in a new browser window, which can be easily printed or saved as a PDF.
+
